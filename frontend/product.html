@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Détails du Produit</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+
+    .product-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .product-image {
+      width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .product-title {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .product-description,
+    .product-category,
+    .product-brand {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .product-price {
+      font-size: 1.5rem;
+      color: green;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007BFF;
+    }
+
+    .order-form {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .order-form label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    .order-form input[type="number"],
+    .order-form input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .order-form button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background-color: #007BFF;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .order-form button:hover {
+      background-color: #0056b3;
+    }
+
+    .order-message {
+      margin-top: 15px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="product-container">
+    <img id="product-image" class="product-image" />
+    <h1 id="product-title" class="product-title"></h1>
+    <p id="product-description" class="product-description"></p>
+    <p id="product-category" class="product-category"></p>
+    <p id="product-brand" class="product-brand"></p>
+    <p id="product-price" class="product-price"></p>
+
+  
+    <form id="order-form" class="order-form">
+      <label for="quantity">Quantité :</label>
+      <input type="number" id="quantity" name="quantity" min="1" value="1" required />
+
+      <label for="address">Adresse de livraison :</label>
+      <input type="text" id="address" name="address" placeholder="Votre adresse" required />
+
+      <button type="submit">Commander</button>
+    </form>
+    <p id="order-message" class="order-message"></p>
+
+    <a href="index.html" class="back-link">← Retour à la liste</a>
+  </div>
+
+  <script>
+    let currentProduct = null;
+
+    async function loadProduct() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get('id');
+      if (!productId) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${productId}`);
+        const product = await res.json();
+        currentProduct = product;
+
+        document.getElementById('product-title').textContent = product.name;
+        document.getElementById('product-description').textContent = product.description || "Pas de description.";
+        document.getElementById('product-price').textContent = product.price ? `${product.price} €` : "Prix non disponible";
+        document.getElementById('product-category').textContent = `Catégorie : ${product.category || 'Non spécifiée'}`;
+        document.getElementById('product-brand').textContent = `Marque : ${product.brand || 'Non spécifiée'}`;
+        document.getElementById('product-image').src = product.image || "https://via.placeholder.com/400x300";
+        document.getElementById('product-image').alt = product.name;
+
+      } catch (error) {
+        console.error("Erreur de chargement du produit :", error);
+      }
+    }
+
+document.getElementById('order-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+
+  const quantity = parseInt(document.getElementById('quantity').value);
+  const address = document.getElementById('address').value;
+
+  if (!currentProduct) {
+    alert("Produit non chargé.");
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+      },
+      body: JSON.stringify({
+        productId: currentProduct._id,
+        quantity,
+        address
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de la commande");
+    }
+
+    document.getElementById('order-message').textContent = "✅ Commande enregistrée avec succès !";
+  } catch (err) {
+    console.error(err);
+    document.getElementById('order-message').textContent = "❌ " + err.message;
+  }
+});
+
+
+    window.addEventListener('DOMContentLoaded', loadProduct);
+  </script>
+</body>
+</html>

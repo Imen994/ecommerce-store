@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liste des Produits</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 10px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #013817;
+    }
+    #product-list {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    #product-list li {
+      background-color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      padding: 15px;
+      transition: transform 0.2s ease;
+    }
+    #product-list li:hover {
+      transform: scale(1.03);
+    }
+    .product-image {
+      width: 100%;
+      height: 150px;
+      object-fit: contain;
+      background: #fff;
+    }
+    .product-title {
+      margin: 10px 0 5px;
+      font-size: 1.2rem;
+      color: #222;
+    }
+    .product-description {
+      font-size: 0.9rem;
+      color: #555;
+      height: 40px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-price {
+      font-weight: bold;
+      color: #008000;
+      margin-top: 10px;
+      font-size: 1.1rem;
+    }
+    #error-message {
+      text-align: center;
+      color: red;
+      margin-top: 30px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Liste des Produits</h1>
+  <ul id="product-list"></ul>
+  <p id="error-message" style="display:none;">Erreur lors du chargement des produits.</p>
+
+  <script>
+    async function fetchProducts() {
+    const productList = document.getElementById('product-list');
+    const errorMessage = document.getElementById('error-message');
+    productList.innerHTML = '';
+    errorMessage.style.display = 'none';
+
+    try {
+      const res = await fetch('http://localhost:5000/api/products');
+      if (!res.ok) throw new Error('Échec de récupération des produits');
+
+      const products = await res.json();
+
+      if (products.length === 0) {
+        productList.innerHTML = '<li>Aucun produit disponible.</li>';
+        return;
+      }
+
+      products.forEach(product => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <a href="product.html?id=${product._id}" style="text-decoration:none; color:inherit;">
+            <img src="${product.image}" alt="${product.name}" class="product-image" />
+            <h2 class="product-title">${product.name}</h2>
+            <p class="product-description">${product.description || 'Pas de description.'}</p>
+            <p class="product-price">${product.price ? product.price + ' €' : 'Prix non disponible'}</p>
+          </a>
+        `;
+        productList.appendChild(li);
+      });
+
+    } catch (err) {
+      console.error(err);
+      errorMessage.style.display = 'block';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', fetchProducts);
+</script>
+
+</body>
+</html>
